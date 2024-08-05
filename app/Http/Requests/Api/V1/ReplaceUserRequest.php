@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
-class StoreUserRequest extends BaseUserRequest
+class ReplaceUserRequest extends BaseUserRequest
 {
     /**
      * Determine if the user is authorized to make this request.
