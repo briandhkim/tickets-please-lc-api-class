@@ -30,7 +30,6 @@ final class Abilities
 
     public static function getAbilities(User $user)
     {
-        //should not use '*'
         if ($user->is_manager) {
             return [
                 self::CreateTicket,
