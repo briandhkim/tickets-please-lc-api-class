@@ -9,7 +9,6 @@ use App\Http\Requests\Api\V1\UpdateUserRequest;
 use App\Http\Resources\V1\UserResource;
 use App\Models\User;
 use App\Policies\V1\UserPolicy;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class UserController extends ApiController
@@ -40,14 +39,12 @@ class UserController extends ApiController
      */
     public function store(StoreUserRequest $request)
     {
-        try {
-            //policy
-            $this->isAble('store', User::class);
-
+        //policy
+        if ($this->isAble('store', User::class)) {
             return new UserResource(User::create($request->mappedAttributes()));
-        } catch (AuthorizationException $exception) {
-            return $this->error('Current user is not authorized to create this resource', 403);
         }
+
+        return $this->notAuthorized('Current user is not authorized to create this resource');
     }
 
     /**
@@ -66,21 +63,16 @@ class UserController extends ApiController
         }
     }
 
-    public function replace(ReplaceUserRequest $request, $user_id)
+    public function replace(ReplaceUserRequest $request, User $user)
     {
-        try {
-            $user = User::findOrFail($user_id);
-
-            //policy
-            $this->isAble('replace', $user);
-
+        //policy
+        if ($this->isAble('replace', $user)) {
             $user->update($request->mappedAttributes());
 
             return new UserResource($user);
-
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('User cannot be found.', 404);
         }
+
+        return $this->notAuthorized('Current user is not authorized to update this resource.');
     }
 
     // /**
@@ -94,45 +86,34 @@ class UserController extends ApiController
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateUserRequest $request, $user_id)
+    public function update(UpdateUserRequest $request, User $user)
     {
         /**
          * PATCH - partial update - e.g. title or description or both
          * PUT - replacement - fetch a ticket and replace all of the data
          */
-        try {
-            $user = User::findOrFail($user_id);
-
-            //policy
-            $this->isAble('update', $user);
-
+        //policy
+        if ($this->isAble('update', $user)) {
             $user->update($request->mappedAttributes());
 
             return new UserResource($user);
-
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('User cannot be found.', 404);
-        } catch (AuthorizationException $exception) {
-            return $this->error('Current user is not authorized to update this resource', 403);
         }
+
+        return $this->notAuthorized('Current user is not authorized to update this resource.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($user_id)
+    public function destroy(User $user)
     {
-        try {
-            $user = User::findOrFail($user_id);
-
-            //policy
-            $this->isAble('delete', $user);
-
+        //policy
+        if ($this->isAble('delete', $user)) {
             $user->delete();
 
-            return $this->ok("User $user_id deleted.");
-        } catch (ModelNotFoundException $exception) {
-            return $this->error('User cannot be found.', 404);
+            return $this->ok('User deleted.');
         }
+
+        $this->notAuthorized('Current user is not authorized to delete this resource.');
     }
 }
